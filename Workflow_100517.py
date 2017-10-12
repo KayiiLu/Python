@@ -8,10 +8,12 @@ Created on Mon Sep 18 01:00:21 2017
 import sys
 import json
 import matplotlib.pyplot as plt
+import re
+
 
 from Regression import regression, summary_stat, regPlot, columnNames, frameFromCol, regPlot, corr
 from Conversion import csvDF
-
+from 100117_100517 import combHor, combVer, frameFromCol, basicMan, trainTestSplit, trainKNN, testKNN, predKNN
 #Need to read and Update JSON from website
 
 
@@ -108,8 +110,83 @@ def main():
                 else:
                     idDict[outID] = [inID]
                 finishedPointer.append(thisID)
-
-
+'''NEW'''
+            if instName == 'combHor':
+                #Need to group two dataframe first and then use this
+                if len(idDict[inID]) >=2:
+                    df1 = idDict[idDict[inID][0]]
+                    df2 = idDict[idDict[inID][1]]
+                    idDict[outID] = combHor(df1, df2)
+                    finishedPointer.append(thisID)
+                else:
+                    backwardPointer = list(filter(lambda d: d['target']['id'] == inID, pointer))
+                    for i in range(0, len(backwardPointer)):
+                        workflow(backwardPointer[i], pointer)
+                    
+            if instName == 'combVer':
+                #Need to group two dataframe first and then use this
+                if len(idDict[inID]) >=2:
+                    df1 = idDict[idDict[inID][0]]
+                    df2 = idDict[idDict[inID][1]]
+                    idDict[outID] = combVer(df1, df2)
+                    finishedPointer.append(thisID)
+                else:
+                    backwardPointer = list(filter(lambda d: d['target']['id'] == inID, pointer))
+                    for i in range(0, len(backwardPointer)):
+                        workflow(backwardPointer[i], pointer)
+             
+            pattern = re.compile("^..*[\+\-\*\/]..*$")
+            if pattern.match(instName):
+                df = idDict[inID]
+                
+                m = re.search('..*[\+\-\*\/]', instName)
+                col1 = m.group(0)[:-2]
+                
+                n = re.search('[\+\-\*\/]..*', instName)
+                col2 = n.group(0)[2:]
+                
+                t = re.search('[\+\-\*\/]', instName)
+                command = t.group(0)
+                
+                idDict[outID] = basicMan(df, col1, col2, command)
+                finishedPointer.append(thisID)
+            
+            
+            if instName == "trainTestSplit":
+                if len(idDict[inID]) >= 2:
+                    x = idDict[idDict[inID][0]]
+                    y = idDict[idDict[inID][1]] 
+                    
+                    if len(y.columns) == 1:
+                        idDict[outID] = trainTestSplit (x, y)
+                        finishedPointer.append(thisID)
+                        
+                else: 
+                    backwardPointer = list(filter(lambda d: d['target']['id'] == inID, pointer))
+                    for i in range(0, len(backwardPointer)):
+                        workflow(backwardPointer[i], pointer)
+                        
+            if instName == "x train":
+                idDict[outID] = idDict[inID][0]
+                finishedPointer.append(thisID)
+                
+            if instName == "y train":
+                idDict[outID] = idDict[inID][2]
+                finishedPointer.append(thisID)
+                
+            if instName == "x test":
+                idDict[outID] = idDict[inID][1]
+                finishedPointer.append(thisID)
+                
+            if instName == "y test":
+                idDict[outID] = idDict[inID][3]
+                finishedPointer.append(thisID)
+            
+            
+            
+            
+            
+'''NEW'''          
             if instName == 'summary':
                 idDict[outID] = summary_stat(idDict[inID])
                 finishedPointer.append(thisID)
